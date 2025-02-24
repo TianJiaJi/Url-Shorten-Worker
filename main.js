@@ -6,6 +6,7 @@ let password_value = document.querySelector("#passwordText").value
 // let password_value = "journaljournal"
 
 // 这是默认行为, 在不同的index.html中可以设置为不同的行为
+// This is default, you can define it to different funciton in different theme index.html
 let buildValueItemFunc = buildValueTxt
 
 function shorturl() {
@@ -13,6 +14,10 @@ function shorturl() {
     alert("Url cannot be empty!")
     return
   }
+  
+  // 短链中不能有空格
+  // key can't have space in it
+  document.getElementById('keyPhrase').value = document.getElementById('keyPhrase').value.replace(/\s/g, "-");
 
   document.getElementById("addBtn").disabled = true;
   document.getElementById("addBtn").innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>Please wait...';
@@ -78,7 +83,7 @@ function copyurl(id, attr) {
     window.getSelection().addRange(range);
     document.execCommand('copy');
     window.getSelection().removeAllRanges();
-    console.log('Copy success')
+    // console.log('Copy success')
   } catch (e) {
     console.log('Copy error')
   }
@@ -98,11 +103,11 @@ function loadUrlList() {
 
   // 文本框中的长链接
   let longUrl = document.querySelector("#longURL").value
-  console.log(longUrl)
+  // console.log(longUrl)
 
   // 遍历localStorage
   let len = localStorage.length
-  console.log(+len)
+  // console.log(+len)
   for (; len > 0; len--) {
     let keyShortURL = localStorage.key(len - 1)
     let valueLongURL = localStorage.getItem(keyShortURL)
@@ -121,16 +126,15 @@ function addUrlToList(shortUrl, longUrl) {
   let urlList = document.querySelector("#urlList")
 
   let child = document.createElement('div')
-  child.classList.add("mb-3")
-  child.classList.add("list-group-item")
+  child.classList.add("mb-3", "list-group-item")
 
   let keyItem = document.createElement('div')
   keyItem.classList.add("input-group")
 
   // 删除按钮 Remove item button
   let delBtn = document.createElement('button')
-  delBtn.setAttribute('type', 'button')
-  delBtn.classList.add("btn", "btn-danger")
+  delBtn.setAttribute('type', 'button')  
+  delBtn.classList.add("btn", "btn-danger", "rounded-bottom-0")
   delBtn.setAttribute('onclick', 'deleteShortUrl(\"' + shortUrl + '\")')
   delBtn.setAttribute('id', 'delBtn-' + shortUrl)
   delBtn.innerText = "X"
@@ -147,11 +151,25 @@ function addUrlToList(shortUrl, longUrl) {
 
   // 短链接信息 Short url
   let keyTxt = document.createElement('span')
-  keyTxt.classList.add("form-control")
+  keyTxt.classList.add("form-control", "rounded-bottom-0")
   keyTxt.innerText = window.location.protocol + "//" + window.location.host + "/" + shortUrl
   keyItem.appendChild(keyTxt)
+
+  // 显示二维码按钮
+  let qrcodeBtn = document.createElement('button')  
+  qrcodeBtn.setAttribute('type', 'button')
+  qrcodeBtn.classList.add("btn", "btn-info")
+  qrcodeBtn.setAttribute('onclick', 'buildQrcode(\"' + shortUrl + '\")')
+  qrcodeBtn.setAttribute('id', 'qrcodeBtn-' + shortUrl)
+  qrcodeBtn.innerText = "QR"
+  keyItem.appendChild(qrcodeBtn)
   
   child.appendChild(keyItem)
+
+  // 插入一个二级码占位
+  let qrcodeItem = document.createElement('div');
+  qrcodeItem.setAttribute('id', 'qrcode-' + shortUrl)
+  child.appendChild(qrcodeItem)
 
   // 长链接信息 Long url
   child.appendChild(buildValueItemFunc(longUrl))
@@ -306,9 +324,67 @@ function loadKV() {
   })
 }
 
+// 生成二维码
+function buildQrcode(shortUrl) {
+  // 感谢项目 https://github.com/lrsjng/jquery-qrcode
+  var options = {
+    // render method: 'canvas', 'image' or 'div'
+    render: 'canvas',
+
+    // version range somewhere in 1 .. 40
+    minVersion: 1,
+    maxVersion: 40,
+
+    // error correction level: 'L', 'M', 'Q' or 'H'
+    ecLevel: 'Q',
+
+    // offset in pixel if drawn onto existing canvas
+    left: 0,
+    top: 0,
+
+    // size in pixel
+    size: 256,
+
+    // code color or image element
+    fill: '#000',
+
+    // background color or image element, null for transparent background
+    background: null,
+
+    // content
+    // 要转换的文本
+    text: window.location.protocol + "//" + window.location.host + "/" + shortUrl,
+
+    // corner radius relative to module width: 0.0 .. 0.5
+    radius: 0,
+
+    // quiet zone in modules
+    quiet: 0,
+
+    // modes
+    // 0: normal
+    // 1: label strip
+    // 2: label box
+    // 3: image strip
+    // 4: image box
+    mode: 0,
+
+    mSize: 0.1,
+    mPosX: 0.5,
+    mPosY: 0.5,
+
+    label: 'no label',
+    fontname: 'sans',
+    fontcolor: '#000',
+
+    image: null
+  };
+  $("#qrcode-" + shortUrl.replace(/(:|\.|\[|\]|,|=|@)/g, "\\$1").replace(/(:|\#|\[|\]|,|=|@)/g, "\\$1") ).empty().qrcode(options);
+}
+
 function buildValueTxt(longUrl) {
   let valueTxt = document.createElement('div')
-  valueTxt.classList.add("form-control")
+  valueTxt.classList.add("form-control", "rounded-top-0")
   valueTxt.innerText = longUrl
   return valueTxt
 }
